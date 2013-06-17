@@ -1,0 +1,43 @@
+Index: tuntap_linux.c
+===================================================================
+--- tuntap_linux.c	(revision 6386)
++++ tuntap_linux.c	(working copy)
+@@ -17,6 +17,10 @@
+ 
+ #include "n2n.h"
+ 
++#ifndef IFCONFIGPATH
++#define IFCONFIGPATH "PATH=/sbin:/bin "
++#endif
++
+ #ifdef __linux__
+ 
+ static void read_mac(char *ifname, char *mac_addr) {
+@@ -64,7 +68,11 @@
+                 char *device_mask,
+                 const char * device_mac,
+ 		int mtu) {
++#if defined(ANDROID)
++  char *tuntap_device = "/dev/tun";
++#else
+   char *tuntap_device = "/dev/net/tun";
++#endif
+ #define N2N_LINUX_SYSTEMCMD_SIZE 128
+   char buf[N2N_LINUX_SYSTEMCMD_SIZE];
+   struct ifreq ifr;
+@@ -90,13 +98,13 @@
+   if ( device_mac )
+   {
+       /* Set the hw address before bringing the if up. */
+-      snprintf(buf, sizeof(buf), "/sbin/ifconfig %s hw ether %s",
++      snprintf(buf, sizeof(buf), IFCONFIGPATH "ifconfig %s hw ether %s",
+                ifr.ifr_name, device_mac );
+       system(buf);
+       traceEvent(TRACE_INFO, "Setting MAC: %s", buf);
+   }
+ 
+-  snprintf(buf, sizeof(buf), "/sbin/ifconfig %s %s netmask %s mtu %d up",
++  snprintf(buf, sizeof(buf), IFCONFIGPATH "ifconfig %s %s netmask %s mtu %d up",
+            ifr.ifr_name, device_ip, device_mask, mtu);
+   system(buf);
+   traceEvent(TRACE_INFO, "Bringing up: %s", buf);
